@@ -10,10 +10,11 @@ class OneHotEncoder:
 
     def transform(self, X):
         size = len(X)
-        for i, feat in enumerate(self.features):
+        for values, feat in zip(self.unique_values, self.features):
             # print(feat)
-            for val in self.unique_values[i]:
+            for val in values:
                 X[feat + '=' + str(val)] = DataFrame(zeros(size))
                 X.loc[X[feat] == val, feat + '=' + str(val)] = 1
         return X
+
 

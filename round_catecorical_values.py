@@ -1,20 +1,18 @@
 class Rounder:
     def __init__(self):
-        self.keys = None
         self.counts_features = None
         self.replaceable_values = None
         self.possible_numbers = None
 
-    def fit(self, X, counts_features, border=1000):
+    def fit(self, X, counts_features=None, border=1000):
         if counts_features is None:
             self.counts_features = ['dire_ward_sentry_count', 'radiant_ward_sentry_count', 'radiant_tpscroll_count']
         else:
             self.counts_features = counts_features
 
         self.replaceable_values = []
-        self.possible_numbers = [
+        self.possible_numbers = []
 
-        ]
         for feat in self.counts_features:
             d = dict(X[feat].value_counts())
             keys = []
