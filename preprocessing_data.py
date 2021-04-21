@@ -1,5 +1,6 @@
 from one_hot_encoder import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
+from round_catecorical_values import Rounder
 
 class Changer:
 
@@ -13,7 +14,29 @@ class Changer:
         self.cat_feats = None
         self.uniq_values = None
 
-    def fill_nan(self, X):
+    def round_catecorical_features(self, X):
+
+        return X
+
+    def fill_nan(self, X, time_non_happening_event=450, ):
+
+        have_null_feats = []
+        for feat in X.columns:
+            n = X[feat].isnull().sum()
+            if n > 0:
+                have_null_feats.append(feat)
+
+        null_times_plus = []
+        null_times_minus = []
+        for feat in have_null_feats:
+            if 'time' in feat:
+                if X[feat].min() > 0:
+                    null_times_plus.append(feat)
+                else:
+                    null_times_minus.append(feat)
+
+        X[null_times_plus] = X[null_times_plus].fillna(450)
+        X[null_times_minus] = X[null_times_minus].fillna(-50)
         return X
 
     def delete_corr(self, X,  delta=0.6):
