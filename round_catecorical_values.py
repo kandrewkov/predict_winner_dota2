@@ -35,11 +35,11 @@ class Rounder:
         return X
 
     def transform(self, X):
-        if self.keys is None:
+        if self.replaceable_values is None:
             return print('Rounder dont fitted')
 
         for numbers, border, feat in zip(self.possible_numbers, self.replaceable_values, self.counts_features):
             for i in range(len(X)):
-                if X[feat].iloc[i] not in numbers:
-                    X[feat].iloc[i] = border
+                if X.loc[i, feat] not in numbers:
+                    X.loc[i, feat] = border
         return X

@@ -18,7 +18,7 @@ class OneHotEncoder:
         for values, feat in zip(self.unique_values, self.features):
             print(feat)
             for val in values:
-                if val is not None:
+                if val is not None and str(val) != 'nan':
                     X[feat + '=' + str(val)] = DataFrame(zeros(size))
                     X.loc[X[feat] == val, feat + '=' + str(val)] = 1
             X = X.drop(feat, axis=1)

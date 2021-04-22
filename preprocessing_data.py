@@ -20,25 +20,26 @@ class Changer:
         self.rounder = None
 
     def fill_nan(self, X, time_non_happening_event=450):
-        have_null_feats = []
-        for feat in X.columns:
-            n = X[feat].isnull().sum()
-            if n > 0:
-                have_null_feats.append(feat)
+        # have_null_feats = []
+        # for feat in X.columns:
+        #     n = X[feat].isnull().sum()
+        #     if n > 0:
+        #         have_null_feats.append(feat)
+        #
+        # null_times_plus = []
+        # null_times_minus = []
+        # for feat in have_null_feats:
+        #     if 'time' in feat:
+        #         if X[feat].min() >= 0:
+        #             null_times_plus.append(feat)
+        #         else:
+        #             null_times_minus.append(feat)
+        #
+        # X[null_times_plus] = X[null_times_plus].fillna(time_non_happening_event)
+        # X[null_times_minus] = X[null_times_minus].fillna(-50)
+        # print(have_null_feats)
 
-        null_times_plus = []
-        null_times_minus = []
-        for feat in have_null_feats:
-            if 'time' in feat:
-                if X[feat].min() >= 0:
-                    null_times_plus.append(feat)
-                else:
-                    null_times_minus.append(feat)
-
-        X[null_times_plus] = X[null_times_plus].fillna(time_non_happening_event)
-        X[null_times_minus] = X[null_times_minus].fillna(-50)
-        print(have_null_feats)
-        return X
+        return X.fillna(0)
 
     def delete_corr(self, X,  border=0.6, show=False):
         '''border - float value'''
@@ -58,7 +59,7 @@ class Changer:
         if show:
             print(self.features_corr_matrix[list(self.corr_feats)])
 
-        #delete features with lh, xp, for all players
+        #  delete features with lh, xp, for all players
 
         #                 print(Corr[feat_x][feat_y], feat_x, feat_y)
 
@@ -82,14 +83,14 @@ class Changer:
 
         self.rounder = Rounder()
         self.X_train = self.rounder.fit(self.X_train)
-        print('Rounded')
+        print('-Rounded')
 
         self.encoder = OneHotEncoder(self.cat_feats)
         self.X_train = self.encoder.fit(self.X_train)
-        print('One hot encoding finished')
+        print('-One hot encoding finished')
 
         self.X_train = self.fill_nan(self.X_train)
-        print('Gaps filled')
+        print('-Gaps filled')
 
         # self.X_train = self.delete_corr(self.X_train)
         self.corr_feats = []
@@ -97,14 +98,14 @@ class Changer:
             if 'xp' in feat or 'lh' in feat:
                 self.corr_feats.append(feat)
         self.X_train = self.X_train.drop(self.corr_feats, axis=1)
-        print('Correlated features removed')
+        print('-Correlated features removed')
 
         # self.find_abnormal_values()
         self.scaler = Scaler()
         self.X_train = self.scaler.fit(self.X_train)
-        print('The values of the features scaled')
-        print('End of fitting')
-        return X, y
+        print('-The values of the features scaled')
+        print('end of fitting.')
+        return self.X_train, self.y_train
 
     def transform(self, X):
         if self.encoder is None:
@@ -115,17 +116,21 @@ class Changer:
             return print("Model has not got Rounder. Try to fit Changer")
         self.X_test = X
 
+        print('start transform:')
+
         self.X_test = self.rounder.transform(self.X_test)
-        print('Rounded')
+        print('-Rounded')
 
         self.X_test = self.encoder.transform(self.X_test)
-        print('One hot encoding finished')
+        print('-One hot encoding finished')
+
+
 
         self.X_test = self.fill_nan(self.X_test)
-        print('Gaps filled')
+        print('-Gaps filled')
 
         # self.X_test = self.delete_corr(self.X_test)
         self.X_test = self.X_test.drop(self.corr_feats, axis=1)
-        print('correlated features removed')
-
+        print('-Correlated features removed')
         self.X_test = self.scaler.transform(self.X_test)
+        return self.X_test
