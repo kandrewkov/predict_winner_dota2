@@ -3,7 +3,7 @@ from sklearn.linear_model import LogisticRegression
 import pandas as pd
 
 train = pd.read_csv('features.csv')
-X_train, y = train.drop('radiant_win', axis=1),  train['radian_win']
+X_train, y = train.drop('radiant_win', axis=1),  train['radiant_win']
 X_test = pd.read_csv('features_test.csv')
 
 heroes_feats = ['d1_hero', 'd2_hero', 'd3_hero', 'd4_hero', 'd5_hero',
@@ -14,9 +14,9 @@ categorical_features = ['lobby_type', 'first_blood_team',
 changer = Changer(categorical_features)
 X_train, y = changer.fit(X_train, y)
 
-changer.transform(X_test)
+# changer.transform(X_test)
 
-clf = LogisticRegression()
-clf.fit(X_train, y)
-y_pred = clf.predict_proba(X_test)[:, 1]
-pd.DataFrame(y_pred).to_csv('y_pred.csv')
+# clf = LogisticRegression()
+# clf.fit(X_train, y)
+# y_pred = clf.predict_proba(X_test)[:, 1]
+# pd.DataFrame(y_pred).to_csv('y_pred.csv')

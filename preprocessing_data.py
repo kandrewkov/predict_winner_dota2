@@ -6,9 +6,8 @@ from pandas import DataFrame
 
 class Changer:
 
-    def __init__(self, uniq_values, categorical_features):
+    def __init__(self, categorical_features):
         self.cat_feats = categorical_features
-        self.uniq_values = uniq_values
         self.corr_feats = None
         self.features_corr_matrix = None
 
@@ -38,6 +37,7 @@ class Changer:
 
         X[null_times_plus] = X[null_times_plus].fillna(time_non_happening_event)
         X[null_times_minus] = X[null_times_minus].fillna(-50)
+        print(have_null_feats)
         return X
 
     def delete_corr(self, X,  border=0.6, show=False):
@@ -67,16 +67,16 @@ class Changer:
 
         return X
 
-    def find_abnormal_values(self, drop=True):
-        for feat in self.X_train.columns:
-            median = self.X_train[feat].median()
-            quantile_1 = self.X_train[feat].quantile(q=0.25)
-            quantile_3 = self.X_train[feat].quantile(q=0.75)
-            iqr = quantile_3 - quantile_1
-
+    # def find_abnormal_values(self, drop=True):
+    #     for feat in self.X_train.columns:
+    #         median = self.X_train[feat].median()
+    #         quantile_1 = self.X_train[feat].quantile(q=0.25)
+    #         quantile_3 = self.X_train[feat].quantile(q=0.75)
+    #         iqr = quantile_3 - quantile_1
+    #     return X, y
 
     def fit(self, X, y):
-        print("start fitting")
+        print("start fitting:")
         self.X_train = X
         self.y_train = y
 
@@ -97,13 +97,14 @@ class Changer:
             if 'xp' in feat or 'lh' in feat:
                 self.corr_feats.append(feat)
         self.X_train = self.X_train.drop(self.corr_feats, axis=1)
-        print('correlated features removed')
+        print('Correlated features removed')
 
         # self.find_abnormal_values()
         self.scaler = Scaler()
         self.X_train = self.scaler.fit(self.X_train)
         print('The values of the features scaled')
-        print('end of fitting')
+        print('End of fitting')
+        return X, y
 
     def transform(self, X):
         if self.encoder is None:

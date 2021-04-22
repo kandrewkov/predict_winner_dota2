@@ -19,15 +19,18 @@ class Rounder:
             for key in d:
                 #         print(key, d[key], d[key]>1000)
                 if d[key] > border:
-                    self.keys.append(key)
+                    keys.append(key)
                 #             print('keys', keys)
                 else:
                     self.possible_numbers.append(keys)
                     self.replaceable_values.append(key)
-
+                    # mask = (X[feat] not in keys)
+                    # X.loc[mask, feat] = key
+                    # df1.loc[mask, 'mezhsklad'] = '1 Прессование после / Обжиг до'
+                    # print(X.loc[(4), feat])
                     for i in range(len(X)):
-                        if X[feat].iloc[i] not in keys:
-                            X[feat].iloc[i] = key
+                        if X.loc[i, feat] not in keys:
+                            X.loc[i, feat] = key
                     break
         return X
 
