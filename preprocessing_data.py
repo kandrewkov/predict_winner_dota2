@@ -1,7 +1,8 @@
 from one_hot_encoder import OneHotEncoder
-from sklearn.preprocessing import StandardScaler
 from round_catecorical_values import Rounder
+from scaler import Scaler
 from pandas import DataFrame
+
 
 class Changer:
 
@@ -9,6 +10,7 @@ class Changer:
         self.cat_feats = categorical_features
         self.uniq_values = uniq_values
         self.corr_feats = None
+        self.features_corr_matrix = None
 
         self.X_test = None
         self.X_train = None
@@ -18,12 +20,7 @@ class Changer:
         self.scaler = None
         self.rounder = None
 
-    def round_catecorical_features(self, X):
-
-        return X
-
     def fill_nan(self, X, time_non_happening_event=450):
-
         have_null_feats = []
         for feat in X.columns:
             n = X[feat].isnull().sum()
@@ -43,17 +40,30 @@ class Changer:
         X[null_times_minus] = X[null_times_minus].fillna(-50)
         return X
 
-    def delete_corr(self, X,  border=0.6):
+    def delete_corr(self, X,  border=0.6, show=False):
         '''border - float value'''
-        features_corr_matrix = DataFrame(X.corr)
-        self.corr_feats = []
-        for i, feat_x in enumerate(features_corr_matrix.columns):
-            for feat_y in features_corr_matrix.columns[i:]:
+        popular_corr_feats = {}
+        self.features_corr_matrix = DataFrame(X.corr)
+        self.corr_feats = set([])
+
+        for i, feat_x in enumerate(self.features_corr_matrix.columns):
+            for feat_y in self.features_corr_matrix.columns[i:]:
                 if feat_y != feat_x:
-                    if features_corr_matrix[feat_x][feat_y] > border:
-                        self.corr_feats.append((features_corr_matrix[feat_x][feat_y], feat_x, feat_y))
+                    if self.features_corr_matrix[feat_x][feat_y] > border:
+                        # popular_corr_feats[feat_y] = popular_corr_feats.get(feat_y, 0) + 1
+                        # popular_corr_feats[feat_x] = popular_corr_feats.get(feat_x, 0) + 1
+                        self.corr_feats.add(feat_x)
+                        self.corr_feats.add(feat_y)
+
+        if show:
+            print(self.features_corr_matrix[list(self.corr_feats)])
+
+        #delete features with lh, xp, for all players
+
         #                 print(Corr[feat_x][feat_y], feat_x, feat_y)
-        self.corr_feats.sort(key=lambda x: x[0])
+
+
+        popular_corr_feats = sorted(popular_corr_feats.items(), key=lambda element: element[1])
 
         return X
 
@@ -65,26 +75,6 @@ class Changer:
             iqr = quantile_3 - quantile_1
 
 
-
-    def scale(self, X, bias='median', interval='range'):
-        '''
-        X_norm = (X - bias)/ interval
-
-        :param X:
-        :param bias:
-        median - is good for not Gaussian distribution,
-        mean - is good for Gaussian distribution,
-        min - is good for x to [0,1]
-
-        :param interval:
-        'range' = Xmax-Xmin - is good for not Gaussian distribution,
-        'std' - is good for Gaussian distribution,
-        'centr' = [0.75, 0.25] q
-        :return: scaled X
-        '''
-
-        return X
-
     def fit(self, X, y):
         print("start fitting")
         self.X_train = X
@@ -94,27 +84,47 @@ class Changer:
         self.X_train = self.rounder.fit(self.X_train)
         print('Rounded')
 
-        self.encoder = OneHotEncoder(self.cat_feats, self.uniq_values)
-        self.X_train = self.encoder.transform(self.X_train)
+        self.encoder = OneHotEncoder(self.cat_feats)
+        self.X_train = self.encoder.fit(self.X_train)
         print('One hot encoding finished')
 
         self.X_train = self.fill_nan(self.X_train)
         print('Gaps filled')
 
-        self.X_train = self.delete_corr(self.X_train)
+        # self.X_train = self.delete_corr(self.X_train)
+        self.corr_feats = []
+        for feat in X.columns:
+            if 'xp' in feat or 'lh' in feat:
+                self.corr_feats.append(feat)
+        self.X_train = self.X_train.drop(self.corr_feats, axis=1)
         print('correlated features removed')
 
         # self.find_abnormal_values()
+        self.scaler = Scaler()
         self.X_train = self.scaler.fit(self.X_train)
         print('The values of the features scaled')
         print('end of fitting')
 
     def transform(self, X):
         if self.encoder is None:
-            print("Model have not got OneHotEncoder. Try to fit Changer")
+            return print("Model has not got OneHotEncoder. Try to fit Changer")
+        if self.scaler is None:
+            return print("Model has not got Scaler. Try to fit Changer")
+        if self.rounder is None:
+            return print("Model has not got Rounder. Try to fit Changer")
         self.X_test = X
 
-        self.X_test = self.fill_nan(self.X_test)
-        self.X_test = self.delete_corr(self.X_test)
+        self.X_test = self.rounder.transform(self.X_test)
+        print('Rounded')
+
         self.X_test = self.encoder.transform(self.X_test)
-        self.X_test = self.scale(self.X_test)
+        print('One hot encoding finished')
+
+        self.X_test = self.fill_nan(self.X_test)
+        print('Gaps filled')
+
+        # self.X_test = self.delete_corr(self.X_test)
+        self.X_test = self.X_test.drop(self.corr_feats, axis=1)
+        print('correlated features removed')
+
+        self.X_test = self.scaler.transform(self.X_test)
