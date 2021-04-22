@@ -2,7 +2,7 @@ from one_hot_encoder import OneHotEncoder
 from round_catecorical_values import Rounder
 from scaler import Scaler
 from pandas import DataFrame
-
+from  numpy import zeros
 
 class Changer:
 
@@ -75,6 +75,11 @@ class Changer:
     #         quantile_3 = self.X_train[feat].quantile(q=0.75)
     #         iqr = quantile_3 - quantile_1
     #     return X, y
+    def selected_heroes(self, X):
+        for hero in range(1, 114):
+            X['rh ='+hero] = np.zeros()
+            X.loc[, 'rh ='+hero] = 1
+
 
     def fit(self, X, y):
         print("start fitting:")
@@ -97,7 +102,7 @@ class Changer:
         for feat in X.columns:
             if 'xp' in feat or 'lh' in feat:
                 self.corr_feats.append(feat)
-        self.X_train = self.X_train.drop(self.corr_feats, axis=1)
+        # self.X_train = self.X_train.drop(self.corr_feats, axis=1)
         print('-Correlated features removed')
 
         # self.find_abnormal_values()
@@ -130,7 +135,7 @@ class Changer:
         print('-Gaps filled')
 
         # self.X_test = self.delete_corr(self.X_test)
-        self.X_test = self.X_test.drop(self.corr_feats, axis=1)
+        # self.X_test = self.X_test.drop(self.corr_feats, axis=1)
         print('-Correlated features removed')
         self.X_test = self.scaler.transform(self.X_test)
         return self.X_test

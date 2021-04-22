@@ -24,7 +24,7 @@ X_train, y = changer.fit(X_train, y)
 
 X_test = changer.transform(X_test)
 
-clf = LogisticRegression(max_iter=1000)
+clf = LogisticRegression(max_iter=1000, penalty='l1', solver='saga')
 clf.fit(X_train, y)
 print(clf.score(X_train, y), 'score')
 
@@ -35,3 +35,5 @@ print('saved')
 
 # 0.654221947958449 score
 # 0.6875552812917823 score
+# 0.6903013473207857 score
+# 0.6904144811272241 score
