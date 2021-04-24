@@ -10,14 +10,18 @@ class Changer:
         self.cat_feats = categorical_features
         self.corr_feats = None
         self.features_corr_matrix = None
-
-        self.X_test = None
-        self.X_train = None
-        self.y_train = None
-
         self.encoder = None
         self.scaler = None
         self.rounder = None
+
+    def show_nan(self, X):
+        have_null_feats = []
+        for feat in X.columns:
+            n = X[feat].isnull().sum()
+            if n > 0:
+                have_null_feats.append(feat)
+        print(have_null_feats)
+        return have_null_feats
 
     def fill_nan(self, X, time_non_happening_event=450):
         # have_null_feats = []
@@ -69,48 +73,64 @@ class Changer:
         return X
 
     # def find_abnormal_values(self, drop=True):
-    #     for feat in self.X_train.columns:
-    #         median = self.X_train[feat].median()
-    #         quantile_1 = self.X_train[feat].quantile(q=0.25)
-    #         quantile_3 = self.X_train[feat].quantile(q=0.75)
+    #     for feat in X.columns:
+    #         median = X[feat].median()
+    #         quantile_1 = X[feat].quantile(q=0.25)
+    #         quantile_3 = X[feat].quantile(q=0.75)
     #         iqr = quantile_3 - quantile_1
     #     return X, y
-    def selected_heroes(self, X):
-        for hero in range(1, 114):
-            X['rh ='+hero] = np.zeros()
-            X.loc[, 'rh ='+hero] = 1
 
+    def selected_heroes(self, X):
+
+        team_r = ('r'+str(i)+'_hero' for i in range(1, 6))
+        team_d = ('r'+str(i)+'_hero' for i in range(1, 6))
+
+        size = len(X)
+
+        for hero in range(1, 114):
+            X['rh=' + str(hero)] = DataFrame(zeros(size))
+            X['dh=' + str(hero)] = DataFrame(zeros(size))
+
+        for r_hero, d_hero in zip(team_r, team_d):
+            for hero in range(1, 114):
+                X.loc[X[r_hero] == hero, 'rh=' + str(hero)] = 1
+                X.loc[X[d_hero] == hero, 'dh=' + str(hero)] = 1
+                # print(hero, X.loc[X[d_hero] == hero, 'dh=' + str(hero)])
+            X = X.drop([r_hero, d_hero], axis=1)
+
+        return X.drop(['rh=24', 'dh=24', 'rh=107', 'dh=107', 'rh=108',
+                       'dh=108', 'rh=111', 'dh=111', 'rh=113', 'dh=113'], axis=1)
 
     def fit(self, X, y):
         print("start fitting:")
-        self.X_train = X
-        self.y_train = y
 
         self.rounder = Rounder()
-        self.X_train = self.rounder.fit(self.X_train)
+        X = self.rounder.fit(X, border=2000)
         print('-Rounded')
 
         self.encoder = OneHotEncoder(self.cat_feats)
-        self.X_train = self.encoder.fit(self.X_train)
-        print('-One hot encoding finished')
+        X = self.encoder.fit(X)
 
-        self.X_train = self.fill_nan(self.X_train)
+        print('-One hot encoding finished')
+        X = self.selected_heroes(X)
+
+        X = self.fill_nan(X)
         print('-Gaps filled')
 
-        # self.X_train = self.delete_corr(self.X_train)
+        # self.X = self.delete_corr(X)
         self.corr_feats = []
         for feat in X.columns:
             if 'xp' in feat or 'lh' in feat:
                 self.corr_feats.append(feat)
-        # self.X_train = self.X_train.drop(self.corr_feats, axis=1)
+        X = X.drop(self.corr_feats, axis=1)
         print('-Correlated features removed')
 
         # self.find_abnormal_values()
         self.scaler = Scaler()
-        self.X_train = self.scaler.fit(self.X_train)
+        X = self.scaler.fit(X)
         print('-The values of the features scaled')
         print('end of fitting.')
-        return self.X_train, self.y_train
+        return X, y
 
     def transform(self, X):
         if self.encoder is None:
@@ -119,23 +139,25 @@ class Changer:
             return print("Model has not got Scaler. Try to fit Changer")
         if self.rounder is None:
             return print("Model has not got Rounder. Try to fit Changer")
-        self.X_test = X
 
         print('start transform:')
 
-        self.X_test = self.rounder.transform(self.X_test)
+        X = self.rounder.transform(X)
         print('-Rounded')
 
-        self.X_test = self.encoder.transform(self.X_test)
+        X = self.encoder.transform(X)
+        X = self.selected_heroes(X)
         print('-One hot encoding finished')
 
-
-
-        self.X_test = self.fill_nan(self.X_test)
+        X = self.fill_nan(X)
         print('-Gaps filled')
 
-        # self.X_test = self.delete_corr(self.X_test)
-        # self.X_test = self.X_test.drop(self.corr_feats, axis=1)
+        # X = self.delete_corr(X)
+        print(self.corr_feats)
+        X = X.drop(self.corr_feats, axis=1)
         print('-Correlated features removed')
-        self.X_test = self.scaler.transform(self.X_test)
-        return self.X_test
+
+        X = self.scaler.transform(X)
+        print('-The values of the features scaled')
+        print('end of transforming')
+        return X
