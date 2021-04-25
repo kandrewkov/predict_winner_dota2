@@ -4,7 +4,7 @@ class Rounder:
         self.replaceable_values = None
         self.possible_numbers = None
 
-    def fit(self, X, counts_features=None, border=1000):
+    def fit(self, X, counts_features=None, border=1200):
         if counts_features is None:
             self.counts_features = ['dire_ward_sentry_count', 'radiant_ward_sentry_count', 'radiant_tpscroll_count']
         else:
@@ -15,11 +15,11 @@ class Rounder:
 
         for feat in self.counts_features:
             d = dict(X[feat].value_counts())
-            keys = []
+            keys = set([])
             for key in d:
                 #         print(key, d[key], d[key]>1000)
                 if d[key] > border:
-                    keys.append(key)
+                    keys.add(key)
                 #             print('keys', keys)
                 else:
                     self.possible_numbers.append(keys)

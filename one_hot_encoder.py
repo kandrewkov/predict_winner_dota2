@@ -15,13 +15,16 @@ class OneHotEncoder:
 
     def transform(self, X):
         size = len(X)
+        new_heroes_features = []
         for values, feat in zip(self.unique_values, self.features):
-            print(feat)
+            # print(feat)
             for val in values:
                 if val is not None and str(val) != 'nan':
                     X[feat + '=' + str(val)] = DataFrame(zeros(size))
                     X.loc[X[feat] == val, feat + '=' + str(val)] = 1
+                    if 'hero' in feat:
+                        new_heroes_features.append(feat + '=' + str(val))
             X = X.drop(feat, axis=1)
-        return X
+        return X, new_heroes_features
 
 

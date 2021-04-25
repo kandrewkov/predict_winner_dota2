@@ -2,8 +2,9 @@ class Scaler:
     def __init__(self):
         self.biases = None
         self.intervals = None
+        self.features = None
 
-    def fit(self, X, bias_type='median', interval_type='range'):
+    def fit(self, X, bias_type='median', interval_type='range', features=None):
         '''
         X_norm = (X - bias)/ interval
 
@@ -22,9 +23,14 @@ class Scaler:
         self.biases = []
         self.intervals = []
 
+        if features is None:
+            self.features = X.columns
+        else:
+            self.features = features
+
         bias = 0
         interval = 1
-        for feat in X.columns:
+        for feat in self.features:
             if bias_type == 'median':
                 bias = X[feat].median()
             elif bias_type == 'mean':
@@ -45,6 +51,6 @@ class Scaler:
         return X
 
     def transform(self, X):
-        for feat, bias, interval in zip(X.columns, self.biases, self.intervals):
+        for feat, bias, interval in zip(self.features, self.biases, self.intervals):
             X[feat] = (X[feat] - bias) / interval
         return X
